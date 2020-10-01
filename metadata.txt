@@ -10,7 +10,7 @@
 name=qlyrx
 qgisMinimumVersion=3.0
 description=Apply Arcgis Pro .lyrx style
-version=0.1
+version=0.2
 author=arc2qgis
 email=dror.bogin@gmail.com
 
