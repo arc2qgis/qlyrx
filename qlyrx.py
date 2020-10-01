@@ -265,13 +265,23 @@ class qlyrx:
 
     
     def enableQmlSaving(self):
-        print(self.dlg.saveQmlCheck.checkState())
         if self.dlg.saveQmlCheck.isChecked():
             self.dlg.QMLSaveLocation.setEnabled(True)
             self.dlg.qmlLabel.setEnabled(True)
         else:
             self.dlg.QMLSaveLocation.setDisabled(True)
             self.dlg.qmlLabel.setDisabled(True)
+
+    
+    def saveQML(self,layer):
+        try:
+            if(len(self.dlg.QMLSaveLocation.filePath())) > 0:
+                QmlPath = self.dlg.QMLSaveLocation.filePath()
+                layer.saveNamedStyle(QmlPath)
+            else:
+                self.mb.pushWarning('QML Not Saved','missing Path')
+        except Exception as e:
+            self.mb.pushCritical('Error',"Something went wrong with saving the QML, please send us the following error: {}".format(e))
 
 
     def read_lyrx(self, file=None):    
@@ -1486,5 +1496,7 @@ class qlyrx:
             geometry_general_type_str = self.generalise_geom_type(layer) if not isRaster else 'raster'
             
             self.apply_lyrx_symbols(layer, j_data, geometry_general_type_str)
+            if self.dlg.saveQmlCheck.isChecked():
+                self.saveQML(layer)
             self.mb.pushSuccess('Yay',"It's Working")
             #pass
