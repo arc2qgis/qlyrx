@@ -147,8 +147,7 @@ class qlyrx:
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
 
-    # noinspection PyMethodMayBeStatic
-    # noinspection PyMethodMayBeStatic
+
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
 
@@ -265,6 +264,16 @@ class qlyrx:
         self.dlg.layer_select.addItems(vector_layers)
 
     
+    def enableQmlSaving(self):
+        print(self.dlg.saveQmlCheck.checkState())
+        if self.dlg.saveQmlCheck.isChecked():
+            self.dlg.QMLSaveLocation.setEnabled(True)
+            self.dlg.qmlLabel.setEnabled(True)
+        else:
+            self.dlg.QMLSaveLocation.setDisabled(True)
+            self.dlg.qmlLabel.setDisabled(True)
+
+
     def read_lyrx(self, file=None):    
         with open(file, mode="r", encoding="utf-8") as json_file:  
             data = json.load(json_file)
@@ -1457,7 +1466,7 @@ class qlyrx:
         # show the dialog
         self.dlg.show()
         self.load_vectors()
-        
+        self.dlg.saveQmlCheck.stateChanged.connect(self.enableQmlSaving)
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed

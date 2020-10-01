@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>436</width>
-    <height>369</height>
+    <height>413</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -69,7 +69,7 @@
      <x>10</x>
      <y>60</y>
      <width>401</width>
-     <height>221</height>
+     <height>271</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -222,13 +222,88 @@
       </item>
      </layout>
     </item>
+    <item row="3" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <property name="spacing">
+       <number>8</number>
+      </property>
+      <item>
+       <widget class="QCheckBox" name="saveQmlCheck">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>359</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Save style to QML</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="qmlLabel">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>.qml save location</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>85</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QgsFileWidget" name="QMLSaveLocation">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="filter">
+           <string>QML files (*.qml)</string>
+          </property>
+          <property name="storageMode">
+           <enum>QgsFileWidget::SaveFile</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
    </layout>
   </widget>
   <widget class="QDialogButtonBox" name="button_box">
    <property name="geometry">
     <rect>
      <x>60</x>
-     <y>320</y>
+     <y>370</y>
      <width>359</width>
      <height>24</height>
     </rect>
