@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/plugins/qlyrx" >
         <file>icon.png</file>
+        <file>icon_lyrx.png</file>
+        <file>icon_qml.png</file>
     </qresource>
 </RCC>
