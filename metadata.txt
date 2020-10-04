@@ -10,14 +10,14 @@
 name=qlyrx
 qgisMinimumVersion=3.0
 description=Apply Arcgis Pro .lyrx style
-version=0.2
-author=arc2qgis
+version=0.3
+author=Netta Beninson, Dror Bogin
 email=dror.bogin@gmail.com
 
 about=Apply Arcgis Pro .lyrx style to vector layers in QGIS
 
-tracker=https://github.com/arc2qgis/lyrxtoqml/issues
-repository=https://github.com/arc2qgis/lyrxtoqml
+tracker=https://github.com/arc2qgis/qlyrx/issues
+repository=https://github.com/arc2qgis/qlyrx
 # End of mandatory metadata
 
 # Recommended items:
@@ -28,7 +28,7 @@ repository=https://github.com/arc2qgis/lyrxtoqml
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=https://github.com/arc2qgis/lyrxtoqml
+homepage=https://github.com/arc2qgis/qlyrx
 category=Plugins
 icon=icon.png
 # experimental flag
