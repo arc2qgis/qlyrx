@@ -240,15 +240,44 @@ class qlyrx:
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
-        icon_path = ':/plugins/qlyrx/icon.png'
+        lyrx_icon_path = ':/plugins/qlyrx/icon_lyrx.png'
         self.add_action(
-            icon_path,
+            lyrx_icon_path,
             text=self.tr(u'Apply lyrx symbology'),
             callback=self.run,
             parent=self.iface.mainWindow())
+
+        qml_icon_path = ':/plugins/qlyrx/icon_qml.png'
+        LoadStyleAction = QAction('Load Style From QML/SLD')
+        LoadStyleAction.setIcon(QIcon(qml_icon_path))
+        LoadStyleAction.triggered.connect(self.LoadStyle)
+        self.add_action(
+            qml_icon_path,
+            text=self.tr(u'Load Style From QML/SLD'),
+            callback=self.LoadStyle,
+            parent=self.iface.mainWindow())
+        #self.iface.addCustomActionForLayerType(LoadStyleAction,'',qgis.core.QgsMapLayerType(0),True)
         # will be set False in run()
         self.first_start = True
         
+
+    def LoadStyle(self):
+        """
+        Adding a context menu option to apply previously saved QML\SLD styles
+        """
+        layer = self.iface.activeLayer()
+        self.fd = QFileDialog()
+        self.fd.show()
+        self.fd.setFileMode(QFileDialog.ExistingFile)
+        self.fd.setNameFilter("QGIS Layer Style File, SLD File (*.qml *.sld )")
+        if self.fd.exec_():
+            fileName = self.fd.selectedFiles()
+            file = fileName[0]
+        if file.endswith('sld'):
+            layer.loadSldStyle(file)
+        elif file.endswith('qml'):
+            layer.loadNamedStyle(file)
+        layer.triggerRepaint()
 
 
     def load_vectors(self):
