@@ -270,7 +270,7 @@ class qlyrx:
         self.fd.show()
         self.fd.setFileMode(QFileDialog.ExistingFile)
         self.fd.setNameFilter("QGIS Layer Style File, SLD File (*.qml *.sld )")
-        if self.fd.exec_():
+        if self.fd.exec_() == QDialog.Accepted:
             fileName = self.fd.selectedFiles()
             file = fileName[0]
             if file.endswith('sld'):
