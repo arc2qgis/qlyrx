@@ -273,11 +273,11 @@ class qlyrx:
         if self.fd.exec_():
             fileName = self.fd.selectedFiles()
             file = fileName[0]
-        if file.endswith('sld'):
-            layer.loadSldStyle(file)
-        elif file.endswith('qml'):
-            layer.loadNamedStyle(file)
-        layer.triggerRepaint()
+            if file.endswith('sld'):
+                layer.loadSldStyle(file)
+            elif file.endswith('qml'):
+                layer.loadNamedStyle(file)
+            layer.triggerRepaint()
 
 
     def load_vectors(self):
