@@ -10,7 +10,7 @@
 name=qlyrx
 qgisMinimumVersion=3.0
 description=Apply Arcgis Pro .lyrx style
-version=0.3
+version=0.3.1
 author=Netta Beninson, Dror Bogin
 email=dror.bogin@gmail.com
 
@@ -22,8 +22,16 @@ repository=https://github.com/arc2qgis/qlyrx
 
 # Recommended items:
 
-# Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+ 2021-06-18 Version 0.3.1
+ * Rewrote layer loading using pyqgis instaed of base ui elements.
+
+ 2020-10-04 Version 0.3
+ * Added a new button for fast and easy QML/SLD loading for the current active layer.
+ New button icons to tell the button apart.
+
+ 2020-10-01 Version 0.2
+ * First published version
 
 # Tags are comma separated with spaces allowed
 tags=python

@@ -103,24 +103,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QgsMapLayerComboBox" name="layer_select">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
+         <widget class="QComboBox" name="layer_select">
           <property name="minimumSize">
            <size>
-            <width>258</width>
-            <height>20</height>
+            <width>256</width>
+            <height>0</height>
            </size>
-          </property>
-          <property name="excludedProviders">
-           <stringlist>
-            <string>wms</string>
-            <string>wmts</string>
-           </stringlist>
           </property>
          </widget>
         </item>
@@ -197,7 +185,7 @@
          </spacer>
         </item>
         <item>
-         <widget class="QgsFileWidget" name="file_select">
+         <widget class="QgsFileWidget" name="file_select" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
             <horstretch>0</horstretch>
@@ -210,10 +198,10 @@
             <height>20</height>
            </size>
           </property>
-          <property name="dialogTitle">
+          <property name="dialogTitle" stdset="0">
            <string>Choose a lyrx file for symbology to load</string>
           </property>
-          <property name="filter">
+          <property name="filter" stdset="0">
            <string>Arcgis Pro Layer (*.lyrx) ;; </string>
           </property>
          </widget>
@@ -281,15 +269,12 @@
          </spacer>
         </item>
         <item>
-         <widget class="QgsFileWidget" name="QMLSaveLocation">
+         <widget class="QgsFileWidget" name="QMLSaveLocation" native="true">
           <property name="enabled">
            <bool>false</bool>
           </property>
-          <property name="filter">
+          <property name="filter" stdset="0">
            <string>QML files (*.qml)</string>
-          </property>
-          <property name="storageMode">
-           <enum>QgsFileWidget::SaveFile</enum>
           </property>
          </widget>
         </item>
@@ -333,11 +318,6 @@
    <class>QgsFileWidget</class>
    <extends>QWidget</extends>
    <header>qgsfilewidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QgsMapLayerComboBox</class>
-   <extends>QComboBox</extends>
-   <header>qgsmaplayercombobox.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

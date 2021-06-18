@@ -285,11 +285,12 @@ class qlyrx:
         Populate the layer selection with vector layers only
         """
         self.dlg.layer_select.clear()
-        layers = [layer for layer in QgsProject.instance().mapLayers().values()]
+        # Filter vector layers
+        layers = [layer for layer in QgsProject.instance().mapLayers().values() if layer.type() == 0]
         vector_layers = []
         for layer in layers:
-            if layer.type() ==  QgsMapLayer.VectorLayer:
-                vector_layers.append(layer.name())
+            #if layer.type() ==  QgsMapLayer.VectorLayer:
+            vector_layers.append(layer.name())
         self.dlg.layer_select.addItems(vector_layers)
 
     
@@ -1463,14 +1464,11 @@ class qlyrx:
                     
                 renderer = QgsSingleSymbolRenderer(symbol)
         elif raster_symbol:
-            print("raster")
             self.mb.pushWarning('Warning',"Raster symbology is still experimental")
             self.parseRasterData(raster_data, layer)
-            print("after parse all")
             #layer.triggerRepaint()
             #self.iface.legendInterface().refreshLayerSymbology(layer)
         else:
-            print("No matching lyrx symbology fields found for the active layer")
             self.mb.pushCritical('',"No matching lyrx symbology fields found for the active layer")
             # add user interaction
         
@@ -1515,7 +1513,8 @@ class qlyrx:
             
             j_data = self.read_lyrx(self.dlg.file_select.filePath())
             
-            layer = self.dlg.layer_select.currentLayer()
+            layerName = self.dlg.layer_select.currentText()
+            layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.name() == layerName][0]
             #print(dir(layer))
             #print(layer.__class__.__name__)
             #print(point2mm)
