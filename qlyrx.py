@@ -1180,6 +1180,21 @@ class qlyrx:
         
         return label_settings
 
+    self add_field_layout(self,layer,field_name,index):
+        fields_layout = self.dlg.field_selection
+        span = QHBoxLayout()
+        span.setObjectName("span_{}+{}".format(str(field_name)+str(index)))
+        label = QLabel()
+        label.setObjectName("label_{}+{}".format(str(field_name)+str(index)))
+        label.setText("{}  :  ".format(str(field_name)))
+        field_select = QComboBox()
+        field_select.setObjectName("fieldSelect_{}+{}".format(str(field_name)+str(index)))
+        field_select.addItems(layer.fields().names())
+        span.insertItem(0,label)
+        span.insertItem(1,field_select)
+        fields_layout.insertItem(index,span)
+        return
+
     def apply_lyrx_symbols(self, layer, lyrx_data, geometry_general_type_str):
         simple_symbol = False
         raster_symbol = False
@@ -1235,15 +1250,23 @@ class qlyrx:
             x = x + 1
 
         rend_idx = -1
+        self.used_fields = []
         #print(rend_to_check)
         ## Check in the active layers for matching classification fields  
         for z in rend_to_check:
+            for f in renderers[z]['fields']:
+                if f not in self.used_fields:
+                    self.used_fields.append(f)
             #print(renderers[z]['fields'][0])
             #print(layer.fields())
             ## Check for matching column names
             field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
             if field_exist > -1:
                 rend_idx = z
+        
+        for u in range(0,len(self.used_fields)):
+            self.add_field_layout(layer,self.used_fields[u],u)
+        
         
         # Check simple symbol        
         if rend_idx < 0 and not raster_symbol:
