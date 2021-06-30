@@ -1126,11 +1126,11 @@ class qlyrx:
         text_format.setSize(fontSize)
         text_format.setColor(ptColor)
         text_format.setNamedStyle(fontWeight)
-#        buffer_settings = QgsTextBufferSettings()
-#        buffer_settings.setEnabled(True)
-#        buffer_settings.setSize(0.30)
-#        buffer_settings.setColor(QColor("black"))
-#        text_format.setBuffer(buffer_settings)
+        #buffer_settings = QgsTextBufferSettings()
+        #buffer_settings.setEnabled(True)
+        #buffer_settings.setSize(0.30)
+        #buffer_settings.setColor(QColor("black"))
+        #text_format.setBuffer(buffer_settings)
         
         label_settings.setFormat(text_format)
         label_settings.fieldName = labelExp
