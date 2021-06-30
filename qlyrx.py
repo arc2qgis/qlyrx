@@ -21,11 +21,15 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
-from qgis.core import *
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QPointF
+from PyQt5.QtGui import QIcon, QColor, QFont
+from PyQt5.QtWidgets import QAction, QFileDialog, QHBoxLayout, QLabel, QComboBox
+from qgis.core import (QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, QgsRasterShader, QgsRasterBandStats, 
+                        QgsSymbol, QgsSingleSymbolRenderer,QgsSingleBandPseudoColorRenderer, QgsSimpleLineSymbolLayer, 
+                        QgsLinePatternFillSymbolLayer, QgsFontMarkerSymbolLayer, QgsSettings,
+                        QgsPointPatternFillSymbolLayer, QgsMarkerLineSymbolLayer, QgsMarkerSymbol, 
+                        QgsSimpleMarkerSymbolLayerBase, QgsSimpleMarkerSymbolLayer, QgsSVGFillSymbolLayer, 
+                        QgsPalLayerSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling, QgsRendererCategory, QgsCategorizedSymbolRenderer)
 from qgis.utils import *
 import json
 import re
@@ -45,36 +49,18 @@ point2mm =  0.352778
 paths_to_shapes_array = {
     "Cross2" : {"paths" : [
         [
-          [
-            -0.5,
-            0.5
-          ],
-          [
-            0.5,
-            -0.5
-          ]
+          [-0.5,0.5],
+          [0.5,-0.5]
         ],
         [
-          [
-            -0.5,
-            -0.5
-          ],
-          [
-            0.5,
-            0.5
-          ]
+          [-0.5,-0.5],
+          [0.5,0.5]
         ]
     ]},
     "Line" : {"paths" : [
         [
-          [
-            3,
-            0
-          ],
-          [
-            -3,
-            0
-          ]
+          [3,0],
+          [-3,0]
         ]
       ]
     }
@@ -83,22 +69,12 @@ paths_to_shapes_array = {
 circle_rings = {
                     "curveRings" : [
                       [
-                        [
-                          1.2246467991473532e-16,
-                          2
-                        ],
+                        [1.2246467991473532e-16,2],
                         {
                           "a" : [
-                            [
-                              1.2246467991473532e-16,
-                              2
-                            ],
-                            [
-                              0,
-                              0
-                            ],
-                            0,
-                            1
+                            [1.2246467991473532e-16,2],
+                            [0,0],
+                            [0,1]
                           ]
                         }
                       ]
@@ -1180,7 +1156,7 @@ class qlyrx:
         
         return label_settings
 
-    self add_field_layout(self,layer,field_name,index):
+    def add_field_layout(self,layer,field_name,index):
         fields_layout = self.dlg.field_selection
         span = QHBoxLayout()
         span.setObjectName("span_{}+{}".format(str(field_name)+str(index)))

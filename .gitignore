@@ -1,2 +1,4 @@
 zip_build/*
 zip_build/qlyrx/*
+.vscode
+__pycache__
