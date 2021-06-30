@@ -99,6 +99,7 @@ class qlyrx:
         self.mb = self.iface.messageBar()
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
+        self.j_data = None
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
@@ -292,6 +293,9 @@ class qlyrx:
     def read_lyrx(self, file=None):    
         with open(file, mode="r", encoding="utf-8") as json_file:  
             data = json.load(json_file)
+            layerName = self.dlg.layer_select.currentText()
+            layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.name() == layerName][0]
+            self.initial_lyrx_parse(data,layer)
         return data
 
 
@@ -1158,17 +1162,81 @@ class qlyrx:
     def add_field_layout(self,layer,field_name,index):
         fields_layout = self.dlg.field_selection
         span = QHBoxLayout()
-        span.setObjectName("span_{}+{}".format(str(field_name)+str(index)))
+        #span.setObjectName("span_{}+{}".format(str(field_name)+str(index+1)))
         label = QLabel()
-        label.setObjectName("label_{}+{}".format(str(field_name)+str(index)))
+        #label.setObjectName("label_{}+{}".format(str(field_name)+str(index+1)))
         label.setText("{}  :  ".format(str(field_name)))
         field_select = QComboBox()
-        field_select.setObjectName("fieldSelect_{}+{}".format(str(field_name)+str(index)))
+        #field_select.setObjectName("fieldSelect_{}+{}".format(str(field_name)+str(index+1)))
         field_select.addItems(layer.fields().names())
-        span.insertItem(0,label)
-        span.insertItem(1,field_select)
-        fields_layout.insertItem(index,span)
-        return
+        span.addWidget(label)
+        span.addWidget(field_select)
+        fields_layout.insertLayout(index,span)
+        #return
+
+    def initial_lyrx_parse(self,lyrx_data,layer):
+        "perform initial parsing of lyrx values and create ui elements for the required fields"
+        simple_symbol = False
+        raster_symbol = False
+        label_symbol = False
+        layerDef = lyrx_data['layerDefinitions']
+        renderer = ''
+        renderers = []
+        renderers_symb_type = []
+        dataset_names = []
+        raster_data = ''
+        label_symb_array = []
+        label_expessions = []
+        labels = ''
+        for p in layerDef :
+            if 'type' in p:
+               if p['type'] == 'CIMRasterLayer':
+                   raster_symbol = True
+                   raster_data = p
+            ## Check for renderers
+            temp_renderer = p['renderer'] if 'renderer' in p else ''
+            renderers.append(temp_renderer)
+            temp_label = p['labelClasses'] if 'labelClasses' in p else ''
+            label_symb_array.append(temp_label)
+            try:
+                label_expr = self.getLabelField(temp_label[0]) if len(temp_label) else ''
+                #print(label_expr)
+                if label_expr:
+                    label_symbol = True
+                    label_expessions.append(label_expr)
+                else:
+                    label_expessions.append('')
+                ## Get lyrx shape type and original names
+                if not temp_renderer == '' and not raster_symbol:
+                    rend_type = temp_renderer['symbol']['type'] if 'symbol' in temp_renderer else  temp_renderer['defaultSymbol']['symbol']['type']
+                    renderers_symb_type.append(rend_type.lower())
+                    dataset = p['featureTable']['dataConnection']['dataset']
+                    dataset_names.append(dataset)
+            except Exception as e:
+                print(e)
+        print("there are " + str(len(label_symb_array)) + " label def")
+        # Find a renderer with the active layer field attribute
+        rend_to_check = []
+        x = 0    
+        for r in renderers_symb_type:
+            print(r)
+            #if geometry_general_type_str in r:            
+            rend_to_check.append(x)
+            x = x + 1
+
+        rend_idx = -1
+        self.used_fields = []
+        ## Check in the active layers for matching classification fields  
+        for z in rend_to_check:
+            for f in renderers[z]['fields']:
+                if f not in self.used_fields:
+                    self.used_fields.append(f)
+            field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
+            if field_exist > -1:
+                rend_idx = z
+        for u in range(0,len(self.used_fields)):
+            self.add_field_layout(layer,self.used_fields[u],u)
+
 
     def apply_lyrx_symbols(self, layer, lyrx_data, geometry_general_type_str):
         simple_symbol = False
@@ -1239,8 +1307,8 @@ class qlyrx:
             if field_exist > -1:
                 rend_idx = z
         
-        for u in range(0,len(self.used_fields)):
-            self.add_field_layout(layer,self.used_fields[u],u)
+        #for u in range(0,len(self.used_fields)):
+        #    self.add_field_layout(layer,self.used_fields[u],u)
         
         
         # Check simple symbol        
@@ -1502,6 +1570,7 @@ class qlyrx:
         self.dlg.show()
         self.load_vectors()
         self.dlg.saveQmlCheck.stateChanged.connect(self.enableQmlSaving)
+        self.dlg.file_select.fileChanged.connect(self.read_lyrx)
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
@@ -1509,7 +1578,7 @@ class qlyrx:
             # Do something useful here - delete the line containing pass and
             # substitute with your code.
             
-            j_data = self.read_lyrx(self.dlg.file_select.filePath())
+            self.j_data = self.read_lyrx(self.dlg.file_select.filePath())
             
             layerName = self.dlg.layer_select.currentText()
             layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.name() == layerName][0]
@@ -1521,7 +1590,7 @@ class qlyrx:
             isRaster = 'Raster' in layer.__class__.__name__ 
             geometry_general_type_str = self.generalise_geom_type(layer) if not isRaster else 'raster'
             
-            self.apply_lyrx_symbols(layer, j_data, geometry_general_type_str)
+            self.apply_lyrx_symbols(layer, self.j_data, geometry_general_type_str)
             if self.dlg.saveQmlCheck.isChecked():
                 self.saveQML(layer)
             self.mb.pushSuccess('Yay',"It's Working")
