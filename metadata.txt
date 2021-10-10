@@ -10,7 +10,7 @@
 name=qlyrx
 qgisMinimumVersion=3.0
 description=Apply Arcgis Pro .lyrx style
-version=0.3.1
+version=0.3.2
 author=Netta Beninson, Dror Bogin
 email=dror.bogin@gmail.com
 
@@ -23,6 +23,9 @@ repository=https://github.com/arc2qgis/qlyrx
 # Recommended items:
 
 changelog=
+ 2021-10-10 Version 0.3.2
+ * Bug Fix version
+
  2021-06-18 Version 0.3.1
  * Rewrote layer loading using pyqgis instaed of base ui elements.
 

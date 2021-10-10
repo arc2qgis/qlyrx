@@ -33,7 +33,7 @@ from qgis.core import (QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSch
 from qgis.utils import *
 import json
 import re
-import qgis.utils
+
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -1263,10 +1263,11 @@ class qlyrx:
         for p in layerDef :
             #print(p)
             if 'type' in p:
-               print(p['type'])
                if p['type'] == 'CIMRasterLayer':
                    raster_symbol = True
                    raster_data = p
+               else:
+                    raster_symbol = False
             ## Check for renderers
             temp_renderer = p['renderer'] if 'renderer' in p else ''
             renderers.append(temp_renderer)
@@ -1282,7 +1283,17 @@ class qlyrx:
                     label_expessions.append('')
                 ## Get lyrx shape type and original names
                 if not temp_renderer == '' and not raster_symbol:
-                    rend_type = temp_renderer['symbol']['type'] if 'symbol' in temp_renderer else  temp_renderer['defaultSymbol']['symbol']['type']
+                    if 'symbol' in temp_renderer:
+                        rend_type = temp_renderer['symbol']['type']
+                    elif 'defaultSymbol' in temp_renderer:
+                        rend_type = temp_renderer['defaultSymbol']['symbol']['type']
+                    elif 'groups' in temp_renderer:
+                        group0 = temp_renderer['groups'][0]
+                        if 'classes' in group0:
+                            symbol0 = group0['classes'][0]
+                            rend_type = symbol0['symbol']['symbol']['type']
+
+                    #rend_type = temp_renderer['symbol']['type'] if 'symbol' in temp_renderer else  temp_renderer['defaultSymbol']['symbol']['type']
                     renderers_symb_type.append(rend_type.lower())
                     dataset = p['featureTable']['dataConnection']['dataset']
                     dataset_names.append(dataset)
@@ -1293,9 +1304,8 @@ class qlyrx:
                 
         # Find a renderer with the active layer field attribute
         rend_to_check = []
-        x = 0    
+        x = 0   
         for r in renderers_symb_type:
-            #print(r)
             if geometry_general_type_str in r:            
                 rend_to_check.append(x)
             x = x + 1
@@ -1318,12 +1328,14 @@ class qlyrx:
         #for u in range(0,len(self.used_fields)):
         #    self.add_field_layout(layer,self.used_fields[u],u)
         
-        
         # Check simple symbol        
         if rend_idx < 0 and not raster_symbol:
             active_name = layer.sourceName()
-            rend_idx = dataset_names.index(active_name)
-            simple_symbol = True
+            rend_idx = dataset_names.index(active_name) if layer.sourceName() in dataset_names else 0
+            if renderers[0]['type'] != "CIMSimpleRenderer":
+                simple_symbol = False
+            else:    
+                simple_symbol = True
 
         if rend_idx > -1 and not simple_symbol:
             ## Create data arrays for symbols, labels, symbolLayers, halo options
