@@ -1159,7 +1159,15 @@ class qlyrx:
         
         return label_settings
 
+
+    def clear_field_layout(self):
+        fields_layout = self.dlg.field_selection
+        for n in range(0,fields_layout.count()):
+            fields_layout.removeItem(fields_layout.itemAt(n))
+
+
     def add_field_layout(self,layer,field_name,index):
+        self.clear_field_layout()
         fields_layout = self.dlg.field_selection
         span = QHBoxLayout()
         #span.setObjectName("span_{}+{}".format(str(field_name)+str(index+1)))
@@ -1234,8 +1242,8 @@ class qlyrx:
             field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
             if field_exist > -1:
                 rend_idx = z
-        for u in range(0,len(self.used_fields)):
-            self.add_field_layout(layer,self.used_fields[u],u)
+        #for u in range(0,len(self.used_fields)):
+            #self.add_field_layout(layer,self.used_fields[u],u)
 
 
     def apply_lyrx_symbols(self, layer, lyrx_data, geometry_general_type_str):
