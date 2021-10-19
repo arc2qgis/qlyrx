@@ -23,7 +23,7 @@
 """
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QPointF
 from PyQt5.QtGui import QIcon, QColor, QFont
-from PyQt5.QtWidgets import QAction, QFileDialog, QHBoxLayout, QLabel, QComboBox
+from PyQt5.QtWidgets import QAction, QFileDialog, QHBoxLayout, QLabel, QComboBox, QDialog
 from qgis.core import (QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, QgsRasterShader, QgsRasterBandStats, 
                         QgsSymbol, QgsSingleSymbolRenderer,QgsSingleBandPseudoColorRenderer, QgsSimpleLineSymbolLayer, 
                         QgsLinePatternFillSymbolLayer, QgsFontMarkerSymbolLayer, QgsSettings,
