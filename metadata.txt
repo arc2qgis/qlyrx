@@ -26,6 +26,7 @@ changelog=
  2021-10-19 Version 0.3.3
  * Bug Fix version
  added missing import for loading QML\SLD files which broke the tool.
+ replaced wrongfuly deleted ./img folder
 
  2021-10-10 Version 0.3.2
  * Bug Fix version
