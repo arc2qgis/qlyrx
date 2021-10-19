@@ -45,11 +45,16 @@ Tested on Ubuntu 18.04 as well.
   
 
     
-The plugin is named **qlyrx**  
 
 We recommend saving your styles, after creating the new symbology with the plugin as qgis native *.sld/*.qml formats
 
 To use the plugin select a *.lyrx* file and the layer it should style.
+
+
+### Converting .lyr to .lyrx
+
+You can find a python script that converts all .lyr files to .lyrx within a directory (and all of its subdirectories) [here](https://github.com/arc2qgis/lyrxtoqml/blob/master/bulk_lyr_convert.py).  
+note that you need the computer this runs on to have ArcGIS Pro - arcpy pro installed.
 
 
 This plugin is provided under the [*GPL2 License*](LICENSE)
