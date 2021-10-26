@@ -13,7 +13,12 @@ Tested on Ubuntu 18.04 as well.
 
 ### Installation
 
- Download the latest release of [qlyrx.zip](https://github.com/arc2qgis/qlyrx/releases) file and install the plugin using the [**install from zip**](https://docs.qgis.org/testing/en/docs/user_manual/plugins/plugins.html#the-install-from-zip-tab) method within the QGIS plugin manager.  
+ You can install  **qlyrx** directly through the QGIS plugin manager, simply open **<span style="text-decoration: underline">P</span>lugins** -> *Manage and Install Plugins..*  
+ ![](install1.png "step 1")  
+ Then search for **qlyrx** and click on *Install Plugin*  
+ ![](install2.png "step 2")  
+ 
+ You can also install the latest release if you download the [qlyrx.zip](https://github.com/arc2qgis/qlyrx/releases) file from GitHub and install the plugin using the [**install from zip**](https://docs.qgis.org/testing/en/docs/user_manual/plugins/plugins.html#the-install-from-zip-tab) method within the QGIS plugin manager.  
 
 ### Functionality
 - The plugin currently supports lyrx files with:  
