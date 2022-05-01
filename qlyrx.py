@@ -39,47 +39,11 @@ import re
 from .resources import *
 # Import the code for the dialog
 from .qlyrx_dialog import qlyrxDialog
+from .qlyrx_styler import qlyrxStyler
 import os
 import os.path
 from collections import OrderedDict
 
-capStyles ={"Round" : 32, "Square" : 1, "Butt": 0}
-joinStyles = {"Miter": 0, "Bevel" : 64, "Round": 128}
-point2mm =  0.352778
-paths_to_shapes_array = {
-    "Cross2" : {"paths" : [
-        [
-          [-0.5,0.5],
-          [0.5,-0.5]
-        ],
-        [
-          [-0.5,-0.5],
-          [0.5,0.5]
-        ]
-    ]},
-    "Line" : {"paths" : [
-        [
-          [3,0],
-          [-3,0]
-        ]
-      ]
-    }
-}
-
-circle_rings = {
-                    "curveRings" : [
-                      [
-                        [1.2246467991473532e-16,2],
-                        {
-                          "a" : [
-                            [1.2246467991473532e-16,2],
-                            [0,0],
-                            [0,1]
-                          ]
-                        }
-                      ]
-                    ]
-                  }
 
 
 
@@ -115,6 +79,7 @@ class qlyrx:
                 QCoreApplication.installTranslator(self.translator)
         
         self.dlg = qlyrxDialog()
+        self.styler = qlyrxStyler()
         
         # Declare instance attributes
         self.actions = []
@@ -538,7 +503,7 @@ class qlyrx:
         lineCap = 1
         #print(obj['capStyle']) 
         if 'capStyle' in obj:        
-            lineCap = capStyles[obj['capStyle']]
+            lineCap = self.styler.capStyles[obj['capStyle']]
         return lineCap
 
 
@@ -547,7 +512,7 @@ class qlyrx:
         
         if 'joinStyle' in obj:        
             #print(obj['joinStyle']) 
-            lineJoin = joinStyles[obj['joinStyle']]
+            lineJoin = self.styler.joinStyles[obj['joinStyle']]
         #print(lineJoin)
         return lineJoin 
 
@@ -565,7 +530,7 @@ class qlyrx:
                 ## Check dash effects
                 dp = self.parseStrokeEffects(ls)            
                 new_color = self.colorToRgbArray(ls['color']['values'], ls['color']['type'])            
-                stroke_width = ls['width']*point2mm                         
+                stroke_width = ls['width']*self.styler.point2mm                         
                 cap = self.parseLineCap(ls)                                
                 join = self.parseLineJoin(ls)
                 stroke_order = ls['sl_idx'] if 'sl_idx' in ls else 0
@@ -625,7 +590,7 @@ class qlyrx:
             if obj['effects'][0]['type'] == 'CIMGeometricEffectDashes' :
                 temp_pattern = obj['effects'][0]['dashTemplate']
                 for tp in temp_pattern:
-                    temp_array.append(tp*point2mm)
+                    temp_array.append(tp*self.styler.point2mm)
                 dash_pattern = temp_array
         return dash_pattern
 
@@ -655,24 +620,24 @@ class qlyrx:
                     new_color = self.colorToRgbArray(temp_color, symb_def['color']['type'])
                     ## Hatch definitions
                     fill_width = symb_def['width'] if 'width' in symb_def else 1
-                    fill_width = fill_width*point2mm
+                    fill_width = fill_width*self.styler.point2mm
                     fill_distance = ls['separation'] if 'separation' in ls else 0
-                    fill_distance = fill_distance*point2mm
+                    fill_distance = fill_distance*self.styler.point2mm
                     if fill_distance <= 0.6 and not fill_distance == 0:
                         # TODO: add user interaction
                         print("QGIS problem with line fill small distances")
-                        widthRatio = fill_width/point2mm/fill_distance
+                        widthRatio = fill_width/self.styler.point2mm/fill_distance
                         if widthRatio < 1:
                             widthRatio = 1/widthRatio 
                         #print(widthRatio)
                         fill_distance = max(fill_distance*2,0.8)
-                        fill_width = fill_width/point2mm*widthRatio
+                        fill_width = fill_width/self.styler.point2mm*widthRatio
                         if fill_width > fill_distance:
                             # TODO: add user interaction
                             print("Fill width error")
                            
                     fill_offset = ls['offsetX'] if 'offsetX' in ls else 0
-                    #fill_offset = fill_offset*point2mm
+                    #fill_offset = fill_offset*self.styler.point2mm
                     ## Create symbol and set properties
                     symbol_layer = QgsLinePatternFillSymbolLayer() #if symbol_layer == '' else QgsSimpleLineSymbolLayer()
                     if sd_num == 0:
@@ -838,8 +803,8 @@ class qlyrx:
         symbol = QgsFontMarkerSymbolLayer()            
         symbol.setFontFamily(symb_def['fontFamilyName'])
         symbol.setCharacter(chr(symb_def['characterIndex']))
-        new_size = symb_def['size']*point2mm
-        symbol.setSize(symb_def['size']*point2mm)
+        new_size = symb_def['size']*self.styler.point2mm
+        symbol.setSize(symb_def['size']*self.styler.point2mm)
         geometry_general_type_str = self.generalise_geom_type(layer)
         
         if 'rotation' in symb_def:
@@ -873,8 +838,8 @@ class qlyrx:
         ## Check offset        
         offset_def = symb_def['anchorPoint'] if 'anchorPoint' in symb_def else ''
         if 'x' in offset_def:
-            offsetX = offset_def['x']*point2mm
-            offsetY = offset_def['y']*point2mm 
+            offsetX = offset_def['x']*self.styler.point2mm
+            offsetY = offset_def['y']*self.styler.point2mm 
             symbol.setOffset(QPointF(offsetX,offsetY))
             
         ### TODO Fix offset after rotation
@@ -891,8 +856,8 @@ class qlyrx:
             #print("Special fill " + geometry_general_type_str)        
             ## Fill pattern
             if 'markerPlacement' in symb_def and 'stepX' in symb_def['markerPlacement']:
-                symbol_base.setDistanceX(symb_def['markerPlacement']['stepX']*point2mm)
-                symbol_base.setDistanceY(symb_def['markerPlacement']['stepY']*point2mm)    
+                symbol_base.setDistanceX(symb_def['markerPlacement']['stepX']*self.styler.point2mm)
+                symbol_base.setDistanceY(symb_def['markerPlacement']['stepY']*self.styler.point2mm)    
                     
             marker = QgsMarkerSymbol()
             marker.changeSymbolLayer(0, symbol)
@@ -936,12 +901,12 @@ class qlyrx:
                     if 'markerPlacement' in ls and 'placementTemplate' in ls['markerPlacement']:
                         placement = ls['markerPlacement']['placementTemplate'][0]
                         #print("placement " + str(placement))
-                        placement = placement*point2mm 
+                        placement = placement*self.styler.point2mm 
                     if 'markerPlacement' in ls and 'stepX' in ls['markerPlacement']:
-                        markerDistanceX = ls['markerPlacement']['stepX']*point2mm
-                        markerDistanceY = ls['markerPlacement']['stepY']*point2mm
+                        markerDistanceX = ls['markerPlacement']['stepX']*self.styler.point2mm
+                        markerDistanceY = ls['markerPlacement']['stepY']*self.styler.point2mm
                             
-                    symbol_size = ls['size']*point2mm
+                    symbol_size = ls['size']*self.styler.point2mm
                         
                     for mgs in mg:
                         #print(mgs)
@@ -986,7 +951,7 @@ class qlyrx:
                             geom = mgs['geometry']
                             ## Finding matching pattern
                             if 'paths' in geom: 
-                                for path_obj in paths_to_shapes_array:
+                                for path_obj in self.styler.paths_to_shapes_array:
                                     #print(path_obj)
                                     path_pattern = []
                                     for path_p in geom['paths']:
@@ -1008,7 +973,7 @@ class qlyrx:
                                     
                                     alt_path_object = {"paths": path_pattern}
                                     #print(alt_path_object)
-                                    if paths_to_shapes_array[path_obj] == geom or paths_to_shapes_array[path_obj] == alt_path_object:
+                                    if self.styler.paths_to_shapes_array[path_obj] == geom or self.styler.paths_to_shapes_array[path_obj] == alt_path_object:
                                         #print("Found geom!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                                         #print(QgsSimpleMarkerSymbolLayerBase.decodeShape(path_obj))
                                         shape_id, isShape = QgsSimpleMarkerSymbolLayerBase.decodeShape(path_obj)
@@ -1604,7 +1569,7 @@ class qlyrx:
             layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.name() == layerName][0]
             #print(dir(layer))
             #print(layer.__class__.__name__)
-            #print(point2mm)
+            #print(self.styler.point2mm)
             #fields = layer.fields() if layer.fields() else ''
             fields = layer.fields() if "fields" in dir(layer) else ''            
             isRaster = 'Raster' in layer.__class__.__name__ 
