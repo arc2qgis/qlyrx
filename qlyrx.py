@@ -221,18 +221,48 @@ class qlyrx:
             layer.triggerRepaint()
 
 
+    def getIcon(self,layer):
+        layerType = layer.type()
+        provider = layer.providerType()
+        if layerType == 0:
+            # Vector
+            geomType = layer.geometryType()
+            if geomType == 0:
+                # Points
+                icon = QIcon(":images/themes/default/mIconPointLayer.svg")
+            elif geomType == 1:
+                # Lines
+                icon = QIcon(":images/themes/default/mIconLineLayer.svg")
+            elif geomType == 2:
+                # Polygons
+                icon = QIcon(":images/themes/default/mIconPolygonLayer.svg")
+            else:
+                # Tables, maybe filter in advance
+                icon = QIcon(":images/themes/default/mIconTableLayer.svg")
+        elif layerType == 1:
+            # Raster
+            if provider == "wms":
+                icon = QIcon(":images/themes/default/mIconWms.svg")
+            elif provider == "gdal":
+                icon = QIcon(":images/themes/default/mIconRaster.svg")
+            elif provider == "arcgismapserver":
+                icon = QIcon(":images/themes/default/mIconRaster.svg")
+        elif layerType == 3:
+            icon = QIcon(":images/themes/default/mIconMeshLayer.svg")
+        return icon
+
+
     def load_vectors(self):
         """
         Populate the layer selection with vector layers only
         """
         self.dlg.layer_select.clear()
-        # Filter vector layers
-        layers = [layer for layer in QgsProject.instance().mapLayers().values() if layer.type() == 0]
-        vector_layers = []
+        layers = [layer for layer in QgsProject.instance().mapLayers().values()]
         for layer in layers:
-            #if layer.type() ==  QgsMapLayer.VectorLayer:
-            vector_layers.append(layer.name())
-        self.dlg.layer_select.addItems(vector_layers)
+            icon = self.getIcon(layer)
+            name = layer.name()
+            userData = {'id':layer.id()}
+            self.dlg.layer_select.addItem(icon,name,userData)
 
     
     def enableQmlSaving(self):
@@ -258,8 +288,8 @@ class qlyrx:
     def read_lyrx(self, file=None):    
         with open(file, mode="r", encoding="utf-8") as json_file:  
             data = json.load(json_file)
-            layerName = self.dlg.layer_select.currentText()
-            layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.name() == layerName][0]
+            layerID = self.dlg.layer_select.currentData()["id"]
+            layer = [layer for layer in QgsProject.instance().mapLayers().values() if layer.id() == layerID][0]
             self.styler.initial_lyrx_parse(data,layer)
         return data
 
