@@ -24,16 +24,16 @@
 
 import os
 import re
-from qgis.core import (QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, QgsRasterShader, QgsRasterBandStats, 
+from qgis.core import ( QgsMessageLog, Qgis, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, QgsRasterShader, QgsRasterBandStats, 
                         QgsSymbol, QgsSingleSymbolRenderer,QgsSingleBandPseudoColorRenderer, QgsSimpleLineSymbolLayer, 
                         QgsLinePatternFillSymbolLayer, QgsFontMarkerSymbolLayer, QgsSettings,
                         QgsPointPatternFillSymbolLayer, QgsMarkerLineSymbolLayer, QgsMarkerSymbol, 
                         QgsSimpleMarkerSymbolLayerBase, QgsSimpleMarkerSymbolLayer, QgsSVGFillSymbolLayer, 
                         QgsPalLayerSettings, QgsTextFormat, QgsVectorLayerSimpleLabeling, QgsRendererCategory, QgsCategorizedSymbolRenderer)
-from PyQt5.QtWidgets import QAction, QFileDialog, QHBoxLayout, QLabel, QComboBox, QDialog
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QPointF
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QComboBox
+from PyQt5.QtCore import QPointF
 from collections import OrderedDict
-from PyQt5.QtGui import QIcon, QColor, QFont
+from PyQt5.QtGui import QColor, QFont
 
 
 class qlyrxStyler():
@@ -78,7 +78,6 @@ class qlyrxStyler():
         labels = ''
 
         for p in layerDef :
-            #print(p)
             if 'type' in p:
                if p['type'] == 'CIMRasterLayer':
                    raster_symbol = True
@@ -92,7 +91,6 @@ class qlyrxStyler():
             label_symb_array.append(temp_label)
             try:
                 label_expr = self.getLabelField(temp_label[0]) if len(temp_label) else ''
-                #print(label_expr)
                 if label_expr:
                     label_symbol = True
                     label_expessions.append(label_expr)
@@ -115,8 +113,8 @@ class qlyrxStyler():
                     dataset = p['featureTable']['dataConnection']['dataset']
                     dataset_names.append(dataset)
             except Exception as e:
-                print(e)
-        print("there are " + str(len(label_symb_array)) + " label def")
+                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+        QgsMessageLog.logMessage("there are " + str(len(label_symb_array)) + " label def", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
 
                 
         # Find a renderer with the active layer field attribute
@@ -129,14 +127,11 @@ class qlyrxStyler():
 
         rend_idx = -1
         self.used_fields = []
-        #print(rend_to_check)
         ## Check in the active layers for matching classification fields  
         for z in rend_to_check:
             for f in renderers[z]['fields']:
                 if f not in self.used_fields:
                     self.used_fields.append(f)
-            #print(renderers[z]['fields'][0])
-            #print(layer.fields())
             ## Check for matching column names
             field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
             if field_exist > -1:
@@ -160,8 +155,8 @@ class qlyrxStyler():
             allSymbolLayers = {}
             class_field = renderers[rend_idx]['fields'][0] if len(renderers[rend_idx]['fields']) > 0 else 'CODE'
             class_field2 = renderers[rend_idx]['fields'][1] if len(renderers[rend_idx]['fields']) > 1 else ''
-            class_field3 = renderers[rend_idx]['fields'][2] if len(renderers[rend_idx]['fields']) > 2 else ''
-            #print(class_field)
+            ## TODO: check why unused
+            #class_field3 = renderers[rend_idx]['fields'][2] if len(renderers[rend_idx]['fields']) > 2 else ''
             classes = renderers[rend_idx]["groups"][0]["classes"]
             symbols_labels = []
             symbol_layers = []
@@ -187,16 +182,12 @@ class qlyrxStyler():
             ## Convert the symbolLayers definition of each CIMUniqueValueClass to qgis symbol and create a category
             idx = 0
             for sl in symbol_layers:
-                #print(sl)
-                #print ("val :" + str(symbol_values[idx][0]))
                 allSymbolLayers = {}                                    
                 ## Create definition array - add order and more    
                 symbol_def = self.checkSymbolType(sl)
-                layer_num = symbol_def['layer_count']            
-                #print("Symology count is " + str(layer_num))            
+                layer_num = symbol_def['layer_count']                  
                 ret_arr = self.parseSolidFill(symbol_def, layer)            
                 ret = ret_arr[0]
-                #print("solid fill idx " + str(ret_arr[1])) 
                 allSymbolLayers[ret_arr[1]] = ret                        
                 noSolid = False
                 firstDash = False
@@ -206,20 +197,19 @@ class qlyrxStyler():
                 svg_file_appendix = str(symbol_values[idx][0]).replace(" ","_")
                 picture_ret = self.parsePictureFill(symbol_def, svg_file_appendix)
                 if not picture_ret[0] == '':
-                    print("pic fill try")
+                    QgsMessageLog.logMessage("pic fill try", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                     allSymbolLayers[picture_ret[1]] = picture_ret[0]
                     ret.appendSymbolLayer(picture_ret[0])
                 ## Create hatch fill 
                 lines_ret = self.parseLineFill(symbol_def, layer)            
-                #print(len(line_ret))
                 if not lines_ret == '':
                     line_ret = lines_ret[0]
-                    #print("hatch number is " + str(len(line_ret)))
                     for line in line_ret:
                         try:
                             ret.appendSymbolLayer(line)
-                        except:
-                            print(line.__class__.__name__)
+                        except Exception as e:
+                            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                            QgsMessageLog.logMessage(line.__class__.__name__, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                     for line_sym in lines_ret[1]:
                         allSymbolLayers[line_sym] = lines_ret[1][line_sym]                    
 
@@ -229,20 +219,18 @@ class qlyrxStyler():
                     ret = ret_val[0]
                     stroke_symbols = ret_val[1] 
                     for str_s in stroke_symbols:
-                        #print(str_s)
                         allSymbolLayers[str_s] = stroke_symbols[str_s]                                    
                     firstDash = ret_val[2]
                         
                 vector_layers = self.parseVectorSymbolLine(symbol_def, False, layer)
-                #print(vector_layers)
                 if not vector_layers == '':
-                    vl_idx = vector_layers
+                    ## TODO: check why unused
+                    #vl_idx = vector_layers
                     for vl in vector_layers:
                         v_symb = vl[0]
                         v_ord = vl[1]
                         allSymbolLayers[v_ord] = v_symb
                         ret.appendSymbolLayer(v_symb)
-                        #print("After vector")
                     
                     #allSymbolLayers[vl_idx] = vector_layers[0]
                     #ret.appendSymbolLayer(vector_layers[0])
@@ -253,13 +241,10 @@ class qlyrxStyler():
                 max_size = 0            
                 for charSl in sl:            
                     if 'characterIndex' in charSl and charSl['type'] == 'CIMCharacterMarker':
-                        #print(charSl["enable"])
                         if charSl["enable"]:
                             ret_sym = self.parseCharacterFill(charSl, max_size, layer)
-                            #print(ret_sym)
                             symbol = ret_sym[0]                        
-                            if not symbol == '':
-                                #print("char symb desc " + str(charSl['sl_idx']))                            
+                            if not symbol == '':                            
                                 layers.append(symbol)                            
                                 allSymbolLayers[ret_sym[1]] = symbol
                                 if geometry_general_type_str == 'point':          
@@ -280,24 +265,20 @@ class qlyrxStyler():
                 #print("ret count is " + str(ret.symbolLayerCount()))
                 
                 if ((len(layers) > 0 and noSolid ) or (layer_num < ret.symbolLayerCount()) or firstDash ):                                
-                    print("delete first symbol layer")
+                    QgsMessageLog.logMessage("delete first symbol layer", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                     # add user interaction
                     ret.deleteSymbolLayer(0)
                     if -1 in allSymbolLayers:
-                        print("fix demo first layer")
+                        QgsMessageLog.logMessage("fix demo first layer", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                         # add user interaction        
                         del(allSymbolLayers[-1])
                 
-                #print("symbol layers in object " + str(len(allSymbolLayers)))
-                #print("ret symbols " + str(ret.symbolLayerCount()))
                 
                 ## Create ordered object from allSymbolLayers
                 ordered_obj = OrderedDict(sorted(allSymbolLayers.items(), key=lambda t: t[0]))
-                #print("len " + str(len(allSymbolLayers)))
                 total_len = ret.symbolLayerCount()
                 total_sym_len = len(ordered_obj)
-                if -1 in ordered_obj  and not total_len in ordered_obj:
-                    #print("!!!!!!!!!!!!Fix by total length")
+                if -1 in ordered_obj and total_len not in ordered_obj:
                     # TODO: add user interaction
                     ordered_obj[total_len] = ordered_obj[-1].clone()
                     del(ordered_obj[-1])
@@ -308,16 +289,14 @@ class qlyrxStyler():
                 try:
                     if total_sym_len > 1:
                         for ord_sym_idx in reversed(ordered_obj):
-                            #print("in reorder loop " + str(ord_sym_idx))
                             newSymbolLayer  = ordered_obj[ord_sym_idx].clone()
                             locked = ''
-                            if not 'SymbolLayer' in newSymbolLayer.__class__.__name__:
-                                #print("try symbolLayer")
+                            if 'SymbolLayer' not in newSymbolLayer.__class__.__name__:
+                                # try symbolLayer
                                 newSymbolLayer = ordered_obj[ord_sym_idx].symbolLayer(0).clone()
                                 locked = ordered_obj[ord_sym_idx].symbolLayer(0).isLocked()                                
                             else:
                                 locked = ordered_obj[ord_sym_idx].isLocked()
-                            #print("locked " + str(locked))    
                             newSymbolLayer.setLocked(locked)    
                             if not baseLayer:                                                        
                                 if "SymbolLayer" in newSymbolLayer.__class__.__name__:                                
@@ -327,13 +306,12 @@ class qlyrxStyler():
                                 if "SymbolLayer" in newSymbolLayer.__class__.__name__:                                
                                     new_symbol.appendSymbolLayer(newSymbolLayer)                                
                     else:
-                        #print("one layered symbol")
                         new_symbol = ret
-                except:
-                    print("order fail")
+                except Exception as e:
+                    QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                    QgsMessageLog.logMessage("order fail", 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                     # add user interaction
                         
-                #print("new symbol count"  + str(new_symbol.symbolLayerCount()))
 
                 ## Create new category                            
                 symbol_val_prep = symbol_values[idx][0] + ", " + symbol_values[idx][1] if len(symbol_values[idx]) > 1 else symbol_values[idx][0]            
@@ -352,17 +330,15 @@ class qlyrxStyler():
             ## Create renderer                        
             concat_str =  ", " + "', ', " + class_field2 + ")" if not class_field2 == "" else ")"
             renderer = QgsCategorizedSymbolRenderer("concat(" + class_field + concat_str, categories)
-            #print(categories)
             
         elif not raster_symbol and renderers[rend_idx]['type'] == 'CIMSimpleRenderer' and simple_symbol:
             single_symbology = self.parseSimpleRenderer(renderers[rend_idx], layer)
-            #print(single_symbology)
             if not single_symbology == '':
-                #print('simple renderer')
                 symbol = QgsSymbol.defaultSymbol(layer.geometryType())
                 try:
                     symbol.changeSymbolLayer(0, single_symbology)
-                except:
+                except Exception as e:
+                    QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.WARNING)
                     symbol = single_symbology
                     
                 renderer = QgsSingleSymbolRenderer(symbol)
@@ -376,15 +352,11 @@ class qlyrxStyler():
             # add user interaction
         
         if label_symbol: 
-            #print(label_symbol)
-            #print(label_expessions)
-            #print(label_symb_array)
             labels = self.parseLabels(label_symb_array, label_expessions, layer, rend_idx)
-            print("label by layer num " + str(rend_idx) + " in lyrx")
+            QgsMessageLog.logMessage("label by layer num " + str(rend_idx) + " in lyrx", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
 
         # assign the created renderer to the layer
         if not renderer == '' :
-            #print("re-render")
             layer.setRenderer(renderer)
             layer.triggerRepaint()
         
@@ -393,28 +365,29 @@ class qlyrxStyler():
             if not dlg.parseLables.isChecked():
                 layer.setLabelsEnabled(False) 
             layer.triggerRepaint()
-            print("after labeling")
 
 
     def initial_lyrx_parse(self,lyrx_data,layer):
         "perform initial parsing of lyrx values and create ui elements for the required fields"
-        simple_symbol = False
+        #simple_symbol = False
         raster_symbol = False
-        label_symbol = False
+        ## TODO: check why unused
+        #label_symbol = False
         layerDef = lyrx_data['layerDefinitions']
-        renderer = ''
+        #renderer = ''
         renderers = []
         renderers_symb_type = []
         dataset_names = []
-        raster_data = ''
+        ## TODO: check why unused
+        #raster_data = ''
         label_symb_array = []
         label_expessions = []
-        labels = ''
+        #labels = ''
         for p in layerDef :
             if 'type' in p:
                if p['type'] == 'CIMRasterLayer':
                    raster_symbol = True
-                   raster_data = p
+                   #raster_data = p
             ## Check for renderers
             temp_renderer = p['renderer'] if 'renderer' in p else ''
             renderers.append(temp_renderer)
@@ -422,9 +395,8 @@ class qlyrxStyler():
             label_symb_array.append(temp_label)
             try:
                 label_expr = self.getLabelField(temp_label[0]) if len(temp_label) else ''
-                #print(label_expr)
                 if label_expr:
-                    label_symbol = True
+                    #label_symbol = True
                     label_expessions.append(label_expr)
                 else:
                     label_expessions.append('')
@@ -435,18 +407,18 @@ class qlyrxStyler():
                     dataset = p['featureTable']['dataConnection']['dataset']
                     dataset_names.append(dataset)
             except Exception as e:
-                print(e)
-        print("there are " + str(len(label_symb_array)) + " label def")
+                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+        QgsMessageLog.logMessage("there are " + str(len(label_symb_array)) + " label def", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         # Find a renderer with the active layer field attribute
         rend_to_check = []
         x = 0    
         for r in renderers_symb_type:
-            print(r)
             #if geometry_general_type_str in r:            
             rend_to_check.append(x)
             x = x + 1
 
-        rend_idx = -1
+        ## TODO: check why unused
+        #rend_idx = -1
         self.used_fields = []
         ## Check in the active layers for matching classification fields  
         for z in rend_to_check:
@@ -455,7 +427,9 @@ class qlyrxStyler():
                     self.used_fields.append(f)
             field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
             if field_exist > -1:
-                rend_idx = z
+                ## TODO: check why unused
+                #rend_idx = z
+                pass
         #for u in range(0,len(self.used_fields)):
             #self.add_field_layout(dlg,layer,self.used_fields[u],u)
 
@@ -488,10 +462,7 @@ class qlyrxStyler():
         return label_exp
     
     def parseLabels(self, labelSymbArr, labelExpArr, layer, layerId = 0):
-        #print(layerId)
-        #print(labelExpArr)
-        #print(labelSymbArr)
-        label = ''
+        #label = ''
         labelExp = labelExpArr[layerId]
         ## Parse label expression - by default - one label with brackets (VB syntax)
         ##TODO: Generelize
@@ -510,7 +481,7 @@ class qlyrxStyler():
             fontWeight = labelSymbol['symbol']['fontStyleName'] if labelSymbol['symbol']['fontStyleName'] else 'Regular'
             minimumScale = labelParse['minimumScale'] if 'minimumScale' in labelParse else ''            
         except Exception as e:
-            print(e)
+            QgsMessageLog.logMessage(e,'qlyrxStyler', level=Qgis.MessageLevel.Critical)
         
         # Create label settings    
         label_settings  = QgsPalLayerSettings()
@@ -531,7 +502,7 @@ class qlyrxStyler():
         
         ## Default label placement 
         ## TODO: create conversion object to all placement properties
-        label_settings.placement = 1
+        label_settings.placement = Qgis.LabelPlacement(1)
         label_settings.centroidInside = 1
         label_settings.centroidWhole = 1
         ## Scale visibility
@@ -539,7 +510,7 @@ class qlyrxStyler():
             label_settings.scaleVisibility = True if not minimumScale == '' else False
             label_settings.minimumScale = minimumScale if not minimumScale == '' else 0
         except Exception as e:
-            print(e)    
+            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)    
         ## Label visibility
         label_settings.enabled = True
         label_settings = QgsVectorLayerSimpleLabeling(label_settings)
@@ -569,19 +540,17 @@ class qlyrxStyler():
         sl_idx = 0
         count_disabled = 0
         for o in obj:               
-            if not 'desc' in obj_arr  :
+            if 'desc' not in obj_arr  :
                 obj_arr['desc'] = []
             type = o['type']    
-            if  not type in obj_arr  :
+            if  type not in obj_arr  :
                 obj_arr[type] = 0
             obj_arr[type] = obj_arr[type] + 1
             o['sl_idx'] = sl_idx
             obj_arr['desc'].append(o)
             if 'enable' in o and not o['enable']:
                 count_disabled = count_disabled + 1
-                #print('disabled layer')
             sl_idx = sl_idx + 1
-        #print(sl_idx)
         obj_arr['layer_count'] = sl_idx - count_disabled
         if 'CIMHatchFill' in obj_arr:
             obj_arr['template'] = 'hatch'
@@ -625,7 +594,7 @@ class qlyrxStyler():
 
     def parseSymbolLayerSolidFill(self, layers):
         colors = []
-        for l in layers:
+        for l in layers:  # noqa: E741
             if l['type'] == 'CIMSolidFill':            
                 temp_color = l['color']['values']
                 new_color = self.colorToRgbArray(temp_color, l['color']['type'])
@@ -634,24 +603,17 @@ class qlyrxStyler():
 
     def generalise_geom_type(self, layer):
         geometry_type_str = QgsWkbTypes.displayString(layer.wkbType())
-        geometry_type_str = QgsWkbTypes.displayString(int(layer.wkbType()))
-        geometry_type = layer.wkbType()
-        geometry_general_type_str = geometry_type_str.replace('Multi', '').lower()  
+        geometry_general_type_str = geometry_type_str.replace('Multi', '').replace('Z', '').lower()  
         geometry_general_type_str = geometry_general_type_str.replace('string', '')
         return geometry_general_type_str
 
     def parseRasterData(self, obj, layer):
-        #print(obj['colorizer'])
         colorizer = obj['colorizer']
-        renderer = ''
+        #renderer = ''
         if 'Classify' in colorizer['type']:
-            print('classify')
             self.parseRasterClassBreaks(colorizer, layer)
-            print("after parse rend")
         elif 'Unique' in colorizer['type']:
-            print('unique')
             self.parseRasterGroups(colorizer, layer)
-            print("after parse")
         
         #return renderer
         #return ''
@@ -660,13 +622,13 @@ class qlyrxStyler():
         groups = obj['groups']        
         renderer = ''
         col_array = []        
-        val_array = []
+        #val_array = []
         rampArray = []
         stats = self.getRasterLayerStats(layer)
-        print(stats)
+        QgsMessageLog.logMessage(stats, 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         min= stats.minimumValue
         max = stats.maximumValue
-        initMin = False        
+        #initMin = False        
         classes = groups[0]['classes']
         
         for gr in classes:            
@@ -695,15 +657,14 @@ class qlyrxStyler():
             layer.renderer().setClassificationMax(max)
             layer.renderer().shader().rasterShaderFunction().setColorRampItemList(rampArray)            
             layer.triggerRepaint()
-            print("after raster repaint")            
+            QgsMessageLog.logMessage("after raster repaint", 'qlyrxStyler', level=Qgis.MessageLevel.Info)            
                         
         except Exception as e:                                
-            print(e)
+            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                 
         
     def parseRasterClassBreaks(self, obj, layer):
         classBreaks = obj['classBreaks']
-        #print(classBreaks)
         col_array = []        
         val_array = []
         rampArray = []
@@ -717,7 +678,6 @@ class qlyrxStyler():
             val = cb['upperBound'] if 'upperBound' in cb else 0
             val_array.append(val)
             label = cb['label']
-            #print(str(val))
             if not initMin:
                 rampArray.append(QgsColorRampShader.ColorRampItem(val, color, label))
                 initMin = True
@@ -741,21 +701,22 @@ class qlyrxStyler():
             layer.renderer().setClassificationMax(max)
             layer.renderer().shader().rasterShaderFunction().setColorRampItemList(rampArray)            
             layer.triggerRepaint()
-            print("after raster repaint")            
+            QgsMessageLog.logMessage("after raster repaint", 'qlyrxStyler', level=Qgis.MessageLevel.Info)            
                         
         except Exception as e:                                
-            print(e)
+            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
             
         #return ''
 
     def getRasterLayerStats(self, layer):
-        rend = layer.renderer()
+        ## TODO: check why unused
+        #rend = layer.renderer()
         provider = layer.dataProvider()
         ver = provider.hasStatistics(1, QgsRasterBandStats.All)
         stats = provider.bandStatistics(1, QgsRasterBandStats.All,layer.extent(), 0)
         if ver is not False:
-            print("minimumValue = ", stats.minimumValue)
-            print("maximumValue = ", stats.maximumValue)
+            QgsMessageLog.logMessage("RasterLayerStats.minimumValue = ", stats.minimumValue, 'qlyrxStyler', level=Qgis.MessageLevel.Info)
+            QgsMessageLog.logMessage("RasterLayerStats.maximumValue = ", stats.maximumValue, 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         return(stats)
         
     def parseSolidFill(self, obj, layer):
@@ -769,12 +730,11 @@ class qlyrxStyler():
                 symbol = QgsSymbol.defaultSymbol(layer.geometryType())
                 symbol.setColor(new_color)  
                 ### TODO add lock
-                #print("solid index " + str(ls['sl_idx']))
                 #symbol.setStrokeColor(new_color)     
                 solid_index = ls['sl_idx'] if 'sl_idx' in ls else 0
                 i = i + 1
         if i > 1:
-            print("Extra " + str(i) + " solid fills")
+            QgsMessageLog.logMessage("parseSolidFill, Extra " + str(i) + " solid fills", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         # Add default shape fill.
         if symbol == '' or  self.generalise_geom_type(layer) == 'line':
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
@@ -787,7 +747,6 @@ class qlyrxStyler():
 
     def parseLineCap(self, obj):
         lineCap = 1
-        #print(obj['capStyle']) 
         if 'capStyle' in obj:        
             lineCap = self.capStyles[obj['capStyle']]
         return lineCap
@@ -797,14 +756,12 @@ class qlyrxStyler():
         lineJoin = 1
         
         if 'joinStyle' in obj:        
-            #print(obj['joinStyle']) 
             lineJoin = self.joinStyles[obj['joinStyle']]
-        #print(lineJoin)
         return lineJoin 
 
 
     def parseStroke(self, obj, symb, layer):                
-        layers = []
+        #layers = []
         i = 0
         layers_obj = {}
         firstWidth = 0
@@ -858,11 +815,9 @@ class qlyrxStyler():
                         symbol_layer.setOffset(stroke_width/2)
                     # Add dash pattern
                     if not dp == '':
-                        #print("dp in " + str(i) + " stroke symbol")
                         symbol_layer.setUseCustomDashPattern(True)
                         symbol_layer.setCustomDashVector(dp)
                     symbol_layer = self.changeColorLock(symbol_layer, ls)    
-                    #print("stroke symbol idx is " + str(ls['sl_idx']))                  
                     symb.appendSymbolLayer(symbol_layer)                            
                     layers_obj[stroke_order] = symbol_layer
                 i = i + 1            
@@ -882,24 +837,26 @@ class qlyrxStyler():
 
 
     def parseLineFill(self, obj, layer):    
-        isDoubleHatch = False
-        isOffsetEqFirstWidth = True 
+        ## TODO: check why unused
+        #isDoubleHatch = False
+        ## TODO: check why unused
+        #isOffsetEqFirstWidth = True 
         symbol = ""
         layers = []
         layers_obj = {}
         i = 0
-        first_width = 0
+        ## TODO: check why unused
+        #first_width = 0
         prev_hatch = 0
-        geometry_general_type_str = self.generalise_geom_type(layer)
+        ## TODO: check why unused
+        #geometry_general_type_str = self.generalise_geom_type(layer)
         for ls in obj['desc']:        
             if ls['type'] == 'CIMHatchFill' and ls['enable']:            
-                #print(ls['sl_idx'])
                 sd_num = 0
                 full_symbol_layer = ''
                 for sd in reversed(ls['lineSymbol']['symbolLayers']):
-                    #print(sd)
                     symb_def = sd
-                    #print("Line symbol sl num is " + str(sd_num) + "From " + str(len(ls['lineSymbol']['symbolLayers'])))
+                    QgsMessageLog.logMessage("parseLineFill, Line symbol sl num is " + str(sd_num) + "From " + str(len(ls['lineSymbol']['symbolLayers'])), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                     ## New definitions
                     angle = ls['rotation'] if 'rotation' in ls else 0            
                     temp_color = symb_def['color']['values']
@@ -911,16 +868,15 @@ class qlyrxStyler():
                     fill_distance = fill_distance*self.point2mm
                     if fill_distance <= 0.6 and not fill_distance == 0:
                         # TODO: add user interaction
-                        print("QGIS problem with line fill small distances")
+                        QgsMessageLog.logMessage("QGIS problem with line fill small distances", 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
                         widthRatio = fill_width/self.point2mm/fill_distance
                         if widthRatio < 1:
                             widthRatio = 1/widthRatio 
-                        #print(widthRatio)
                         fill_distance = max(fill_distance*2,0.8)
                         fill_width = fill_width/self.point2mm*widthRatio
                         if fill_width > fill_distance:
                             # TODO: add user interaction
-                            print("Fill width error")
+                            QgsMessageLog.logMessage("parseLineFill, Fill width error", 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
                            
                     fill_offset = ls['offsetX'] if 'offsetX' in ls else 0
                     #fill_offset = fill_offset*self.point2mm
@@ -935,7 +891,6 @@ class qlyrxStyler():
                     
                     symbol_layer.setColor(new_color)
                     if sd_num >= 0:
-                        #print("before def")
                         if sd_num == 0:
                             symbol_layer.setLineAngle(angle)
                             symbol_layer.setLineWidth(fill_width)                    
@@ -945,26 +900,25 @@ class qlyrxStyler():
                             #symbol_layer.setAngle(angle)
                             try:
                                 # TODO: add user interaction
-                                print("Try width")
+                                QgsMessageLog.logMessage("parseLineFill, Try width", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                                 symbol_layer.setWidth(fill_width)                    
-                            except:
+                            except Exception as e:
                                 # TODO: add user interaction
-                                print("set width error")
+                                QgsMessageLog.logMessage("set width error", 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
+                                QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
 
                     
                         if not dp == '':
-                            #print("Dash pattern Fill is ")
-                            #print(dp)
                             symbol_layer.subSymbol().symbolLayer(0).setUseCustomDashPattern(True)
                             symbol_layer.subSymbol().symbolLayer(0).setCustomDashVector(dp)
-                            #print(symbol_layer.subSymbol().symbolLayer(0).__class__.__name__)
                         ## Tweak save the first hatch width and use as offset
                         # TODO: Real fix, mark problematic files and unusual offsets
                         if prev_hatch > 0 and sd_num == 0:
                             symbol_layer.setLineWidth(fill_width)
                             symbol_layer.setOffset(fill_width)
                             #isOffsetEqFirstWidth = fill_width == prev_hatch
-                            isDoubleHatch = True
+                            ## TODO: check why unused
+                            #isDoubleHatch = True
                         elif not fill_offset == 0 and not dp == '' :
                             symbol_layer.setOffset(fill_offset)
                     
@@ -972,15 +926,15 @@ class qlyrxStyler():
                             try:                                
                                 full_symbol_layer.subSymbol().appendSymbolLayer(symbol_layer)
                                 
-                            except:
+                            except Exception as e:
                                 # TODO: add user interaction
-                                print("Failed append subsymbol")
-                                print(full_symbol_layer.__class__.__name__)
-                                print(full_symbol_layer.subSymbol().__class__.__name__)
+                                QgsMessageLog.logMessage("Failed append subsymbol", 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
+                                QgsMessageLog.logMessage(full_symbol_layer.__class__.__name__, 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
+                                QgsMessageLog.logMessage(full_symbol_layer.subSymbol().__class__.__name__, 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
+                                QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
                             
                     sd_num = sd_num + 1                                       
                     
-                #print(full_symbol_layer.__class__.__name__)
                 layers.append(full_symbol_layer)
                 if 'sl_idx' in ls:
                     layers_obj[ls['sl_idx']] = full_symbol_layer
@@ -1012,25 +966,30 @@ class qlyrxStyler():
     def changeColorLock(self, sl, symbol_def):
         color_lock = symbol_def['colorLocked'] if 'colorLocked' in symbol_def else ''    
         if not color_lock == '':
-            #print("locked")
             sl.setLocked(True)
         return sl
 
 
     def colorToRgbArray(self, color_array, type):
-        opacity = 255
-        if len(color_array) > 2 and type == 'CIMRGBColor':
-            opacity = color_array[3]/100*255
-            new_color = QColor.fromRgb(color_array[0],color_array[1], color_array[2], opacity) 
-            #print(opacity)
-        else:    
-            new_color = QColor.fromRgb(color_array[0],color_array[1], color_array[2])        
-        if type == 'CIMHSVColor':
-            new_color = QColor.fromHsvF(color_array[0]/360,color_array[1]/100, color_array[2]/100,1)
-        elif type == 'CIMCMYKColor':
-            temp_color = self.cmyk2Rgb(color_array)
-            new_color = QColor.fromRgb(temp_color[0],temp_color[1], temp_color[2])
-        return new_color
+        try:
+            color_array = [int(x) for x in color_array]
+            opacity = 255
+            if len(color_array) > 2 and type == 'CIMRGBColor':
+                opacity = int(color_array[3]/100*255) # ensure opacity is an int in the 0-255 range
+                new_color = QColor.fromRgb(color_array[0],color_array[1], color_array[2], opacity) 
+            else:    
+                new_color = QColor.fromRgb(color_array[0],color_array[1], color_array[2])        
+            if type == 'CIMHSVColor':
+                new_color = QColor.fromHsvF(color_array[0]/360,color_array[1]/100, color_array[2]/100,1)
+            elif type == 'CIMCMYKColor':
+                temp_color = self.cmyk2Rgb(color_array)
+                new_color = QColor.fromRgb(temp_color[0],temp_color[1], temp_color[2])
+            return new_color
+        except Exception as e:
+            QgsMessageLog.logMessage('Error in color conversion', 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            return QColor.fromRgb(255,255,255)
+
 
 
     def parseSimpleRenderer(self, obj, layer):
@@ -1044,34 +1003,31 @@ class qlyrxStyler():
         
         if  symb_def['type'] == 'CIMVectorMarker':
             vector_layers = self.parseVectorSymbolLine(symb_def, True, layer)
-            #print(vector_layers)
             if not vector_layers == '':
-                vl_idx = vector_layers
+                ## TODO: check why unused
+                #vl_idx = vector_layers
                 for vl in vector_layers:
                     v_symb = vl[0]
-                    v_ord = vl[1]
+                    ## TODO: check why unused
+                    #v_ord = vl[1]
                     #allSymbolLayers[v_ord] = v_symb
                     symbol = v_symb
                     #print("After simple vector")
-        print(layer.geometryType())
+        QgsMessageLog.logMessage("parseSimpleRenderer, Geometry type is " + layer.geometryType(), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         if layer.geometryType() == 2:            
-            #print(obj['symbol']['symbol']['symbolLayers'])
-            #print(symb_def)
             solid_array = self.parseSolidFill({"desc": [symb_def]}, layer)
-            #print(solid_array)
             symbol = solid_array[0]
             for sl in obj['symbol']['symbol']['symbolLayers']:                        
                 lines_ret = self.parseLineFill({'desc': [sl]} , layer)                
-                #print(lines_ret)
                 if not lines_ret == '':
                     line_ret = lines_ret[0]
-                    print("hatch number is " + str(len(line_ret)))
                     for line in line_ret:
                         try:
-                            print("append layer")
                             solid_array[0].appendSymbolLayer(line)
-                        except:
-                            print(line.__class__.__name__)
+                        except Exception as e:
+                            QgsMessageLog.logMessage("Failed append line symbol", 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
+                            QgsMessageLog.logMessage(line.__class__.__name__)
+                            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
             
             stroke = self.parseStroke({"desc": [symb_def], "sl_idx": 0}, solid_array[0], layer)
             
@@ -1084,12 +1040,12 @@ class qlyrxStyler():
 
 
     def parseCharacterFill(self, symb_def, max_size, layer):
-        #print(symb_def['sl_idx'])
         ret_val = ''
         symbol = QgsFontMarkerSymbolLayer()            
         symbol.setFontFamily(symb_def['fontFamilyName'])
         symbol.setCharacter(chr(symb_def['characterIndex']))
-        new_size = symb_def['size']*self.point2mm
+        ## TODO: check why unused
+        #new_size = symb_def['size']*self.point2mm
         symbol.setSize(symb_def['size']*self.point2mm)
         geometry_general_type_str = self.generalise_geom_type(layer)
         
@@ -1160,15 +1116,16 @@ class qlyrxStyler():
 
 
     def parseVectorSymbolLine(self, obj, simple, layer):
-        #print(obj)
-        vector_idx = 0
+        # unsused
+        #vector_idx = 0
         vector_symbols = []
         vector_sl_array = []
-        symb_idx = -1
+        ## TODO: check why unused
+        #symb_idx = -1
         base_symbol = ''
         order = ''
         geometry_general_type_str = self.generalise_geom_type(layer)
-        if not 'desc' in obj:
+        if 'desc' not in obj:
             obj['desc'] = [obj]
         for ls in obj['desc']:        
             if ls['type'] == 'CIMVectorMarker' and ls['enable']: 
@@ -1176,17 +1133,11 @@ class qlyrxStyler():
                 order = ls['sl_idx'] if 'sl_idx' in ls else -3
                 if 'markerGraphics' in ls:
                     mg = ls['markerGraphics']
-                    #print("order is "+ str(ls['sl_idx']))
-                    #print(mg)
-                    #print("mg len is " + str(len(mg)))
-                    #if 'geometry' in mg[0]:
-                    #    print(mg)
                     placement = 1
                     markerDistanceX = ''
                     markerDistanceY = ''
                     if 'markerPlacement' in ls and 'placementTemplate' in ls['markerPlacement']:
                         placement = ls['markerPlacement']['placementTemplate'][0]
-                        #print("placement " + str(placement))
                         placement = placement*self.point2mm 
                     if 'markerPlacement' in ls and 'stepX' in ls['markerPlacement']:
                         markerDistanceX = ls['markerPlacement']['stepX']*self.point2mm
@@ -1195,12 +1146,9 @@ class qlyrxStyler():
                     symbol_size = ls['size']*self.point2mm
                         
                     for mgs in mg:
-                        #print(mgs)
                         if 'geometry' in mgs and 'x' in mgs['geometry']:
-                            #print("geom is xy")
                             mgs_sl = mgs['symbol']['symbolLayers']
                             vector_symbols = []
-                            #print(mgs_sl)
                             for sl in mgs_sl:
                                 if sl['type'] == 'CIMCharacterMarker':                                
                                     parsed_symb = self.parseCharacterFill(sl, 0, layer) 
@@ -1220,61 +1168,50 @@ class qlyrxStyler():
                                     if vs_idx > 0:
                                         subSymbLayer = vs.subSymbol().symbolLayer(0).clone()
                                         origFirstSubSymbLayer = base_symbol.subSymbol().symbolLayer(0).clone()
-                                        #print(subSymbLayer)
-                                        #print("append more")
                                         base_symbol.subSymbol().appendSymbolLayer(origFirstSubSymbLayer)
                                         base_symbol.subSymbol().changeSymbolLayer(0, subSymbLayer)
-                                        #print("Count sub: " + str(base_symbol.subSymbol().symbolLayerCount()))
                                     vs_idx = vs_idx + 1
                                 vector_sl_array.append([base_symbol, order])
                             else:
-                                #print("append first")
                                 vector_sl_array.append([vector_symbols[0], order])
                                 
                         else:
-                            #print("geom is ")
-                            #print(mgs['geometry'])
                             geom = mgs['geometry']
                             ## Finding matching pattern
                             if 'paths' in geom: 
                                 for path_obj in self.paths_to_shapes_array:
-                                    #print(path_obj)
                                     path_pattern = []
                                     for path_p in geom['paths']:
                                         pair = []
-                                        for path_pair in path_p:
-                                            #print(path_pair)                                    
+                                        for path_pair in path_p:                                
                                             new_str = ",".join(map(str, path_pair))                                    
                                             new_str  = re.sub('[1-9]', '3', new_str)
                                             new_str = new_str.split(',')
                                             try:
                                                 new_str = [int(i) for i in new_str]
-                                            except:
+                                            except Exception as e:
+                                                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                                                 new_str = [float(i) for i in new_str]
-                                                #print("no change")
-                                            #print(new_str)
                                             pair.append(new_str)                                    
                                                                            
                                         path_pattern.append(pair)
                                     
                                     alt_path_object = {"paths": path_pattern}
-                                    #print(alt_path_object)
                                     if self.paths_to_shapes_array[path_obj] == geom or self.paths_to_shapes_array[path_obj] == alt_path_object:
-                                        #print("Found geom!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                                        #print(QgsSimpleMarkerSymbolLayerBase.decodeShape(path_obj))
+                                        QgsMessageLog.logMessage("Found geom!!!!!!!!!!!!!!!!!!!!!!!!!!!!", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
+                                        QgsMessageLog.logMessage(QgsSimpleMarkerSymbolLayerBase.decodeShape(path_obj), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
                                         shape_id, isShape = QgsSimpleMarkerSymbolLayerBase.decodeShape(path_obj)
                                         main_sym = QgsMarkerLineSymbolLayer.create()
                                         vect_symb = QgsSimpleMarkerSymbolLayer.create()                                
                                         vect_symb.setShape(shape_id)                                
                                         vect_symb.setSize(symbol_size)                                
-                                        #print(vect_symb)
                                         main_sym.subSymbol().changeSymbolLayer(0, vect_symb)
                                         main_sym.setInterval(placement)
                                         vector_sl_array.append([main_sym, order])
                             elif 'curveRings' in geom:                                                    
                                 vect_symb = QgsSimpleMarkerSymbolLayer.create()                                                            
                                 vect_symb.setSize(symbol_size)                                
-                                #print(vect_symb)
+
                                 if not geometry_general_type_str == 'point':
                                     main_sym = QgsMarkerLineSymbolLayer.create()
                                     main_sym.subSymbol().changeSymbolLayer(0, vect_symb)
@@ -1282,14 +1219,10 @@ class qlyrxStyler():
                                     vector_sl_array.append([main_sym, order])
                                 else:
                                     vector_sl_array.append([vect_symb, order])
-        #print(base_symbol)    
-        #if not base_symbol == '':
-        #    print(base_symbol.subSymbol().symbolLayerCount())    
         if len(vector_sl_array) == 0:
             vector_sl_array = ''
-        else:
-            #print(vector_sl_array)                    
-            print("vector array length " + str(len(vector_sl_array)))
+        else:   
+            QgsMessageLog.logMessage("vector array length " + str(len(vector_sl_array)), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         return vector_sl_array
 
 
@@ -1299,9 +1232,9 @@ class qlyrxStyler():
         symb_idx = -1
         for ls in obj['desc']:        
             if ls['type'] == 'CIMPictureFill' and ls['enable']:   
-                #print("Picture url is " + ls["url"])
                 url_data = ls['url']
-                url_data_array = url_data.split(",")
+                ## TODO: check why unused
+                # url_data_array = url_data.split(",")
                 plugin_path = os.path.dirname(os.path.realpath(__file__))
                 svg_path = plugin_path+"\\img"
                 svg_paths = QgsSettings().value('svg/searchPathsForSVG')
@@ -1316,15 +1249,11 @@ class qlyrxStyler():
                         
                 f = open(str(pic_idx)+appendix + ".svg","w")
                 name = f.name
-                #print(name)
                 f.write(template_str)
-                #print(f)
                 template_f.close()
                 f.close()
                 svg_symbol = QgsSVGFillSymbolLayer.create()
                 svg_symbol.setSvgFilePath( name )
-                #print(svg_symbol)
-                #print(svg_symbol.svgFilePath())
                 new_color = self.colorToRgbArray([80,80,80,100], 'CIMRGBColor')     
                 svg_symbol.setSvgFillColor(new_color)
                 svg_symbol.setSvgStrokeColor(new_color)
