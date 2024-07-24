@@ -633,6 +633,7 @@ class qlyrxStyler():
         return colors
 
     def generalise_geom_type(self, layer):
+        geometry_type_str = QgsWkbTypes.displayString(layer.wkbType())
         geometry_type_str = QgsWkbTypes.displayString(int(layer.wkbType()))
         geometry_type = layer.wkbType()
         geometry_general_type_str = geometry_type_str.replace('Multi', '').lower()  
