@@ -8,9 +8,10 @@
 
 [general]
 name=qlyrx
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.30
+qgisMaximumVersion=3.99
 description=Apply Arcgis Pro .lyrx style
-version=0.3.3
+version=0.3.4
 author=Netta Beninson, Dror Bogin
 email=dror.bogin@gmail.com
 
@@ -23,6 +24,12 @@ repository=https://github.com/arc2qgis/qlyrx
 # Recommended items:
 
 changelog=
+ 2024-07-24 Version 0.3.4
+ Adjusted the tool to work with QGIS >= 3.30
+ * Bug Fix version
+    * fixed issue #21 - WkbType replacing QgsWkbType broke version 0.3.3
+    * fixed unreported issue with colorToRgbArray converting int to float which broke the tool.
+
  2021-10-19 Version 0.3.3
  * Bug Fix version
  added missing import for loading QML\SLD files which broke the tool.
