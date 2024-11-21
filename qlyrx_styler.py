@@ -113,7 +113,7 @@ class qlyrxStyler():
                     dataset = p['featureTable']['dataConnection']['dataset']
                     dataset_names.append(dataset)
             except Exception as e:
-                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
         QgsMessageLog.logMessage("there are " + str(len(label_symb_array)) + " label def", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
 
                 
@@ -208,7 +208,7 @@ class qlyrxStyler():
                         try:
                             ret.appendSymbolLayer(line)
                         except Exception as e:
-                            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                             QgsMessageLog.logMessage(line.__class__.__name__, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                     for line_sym in lines_ret[1]:
                         allSymbolLayers[line_sym] = lines_ret[1][line_sym]                    
@@ -308,7 +308,7 @@ class qlyrxStyler():
                     else:
                         new_symbol = ret
                 except Exception as e:
-                    QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                    QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                     QgsMessageLog.logMessage("order fail", 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                     # add user interaction
                         
@@ -338,7 +338,7 @@ class qlyrxStyler():
                 try:
                     symbol.changeSymbolLayer(0, single_symbology)
                 except Exception as e:
-                    QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.WARNING)
+                    QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Warning)
                     symbol = single_symbology
                     
                 renderer = QgsSingleSymbolRenderer(symbol)
@@ -407,7 +407,7 @@ class qlyrxStyler():
                     dataset = p['featureTable']['dataConnection']['dataset']
                     dataset_names.append(dataset)
             except Exception as e:
-                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
         QgsMessageLog.logMessage("there are " + str(len(label_symb_array)) + " label def", 'qlyrxStyler', level=Qgis.MessageLevel.Info)
         # Find a renderer with the active layer field attribute
         rend_to_check = []
@@ -485,7 +485,7 @@ class qlyrxStyler():
             fontWeight = labelSymbol['symbol']['fontStyleName'] if labelSymbol['symbol']['fontStyleName'] else 'Regular'
             minimumScale = labelParse['minimumScale'] if 'minimumScale' in labelParse else ''            
         except Exception as e:
-            QgsMessageLog.logMessage(e,'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            QgsMessageLog.logMessage(str(e),'qlyrxStyler', level=Qgis.MessageLevel.Critical)
         
         # Create label settings    
         label_settings  = QgsPalLayerSettings()
@@ -514,7 +514,7 @@ class qlyrxStyler():
             label_settings.scaleVisibility = True if not minimumScale == '' else False
             label_settings.minimumScale = minimumScale if not minimumScale == '' else 0
         except Exception as e:
-            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)    
+            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)    
         ## Label visibility
         label_settings.enabled = True
         label_settings = QgsVectorLayerSimpleLabeling(label_settings)
@@ -664,7 +664,7 @@ class qlyrxStyler():
             QgsMessageLog.logMessage("after raster repaint", 'qlyrxStyler', level=Qgis.MessageLevel.Info)            
                         
         except Exception as e:                                
-            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                 
         
     def parseRasterClassBreaks(self, obj, layer):
@@ -708,7 +708,7 @@ class qlyrxStyler():
             QgsMessageLog.logMessage("after raster repaint", 'qlyrxStyler', level=Qgis.MessageLevel.Info)            
                         
         except Exception as e:                                
-            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
             
         #return ''
 
@@ -991,7 +991,7 @@ class qlyrxStyler():
             return new_color
         except Exception as e:
             QgsMessageLog.logMessage('Error in color conversion', 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
-            QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+            QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
             return QColor.fromRgb(255,255,255)
 
 
@@ -1017,7 +1017,8 @@ class qlyrxStyler():
                     #allSymbolLayers[v_ord] = v_symb
                     symbol = v_symb
                     #print("After simple vector")
-        QgsMessageLog.logMessage("parseSimpleRenderer, Geometry type is " + layer.geometryType(), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
+        QgsMessageLog.logMessage("parseSimpleRenderer, Geometry type is " + QgsWkbTypes.displayString(layer.wkbType()), 'qlyrxStyler', level=Qgis.MessageLevel.Info)
+        # Polygon
         if layer.geometryType() == 2:            
             solid_array = self.parseSolidFill({"desc": [symb_def]}, layer)
             symbol = solid_array[0]
@@ -1194,7 +1195,7 @@ class qlyrxStyler():
                                             try:
                                                 new_str = [int(i) for i in new_str]
                                             except Exception as e:
-                                                QgsMessageLog.logMessage(e, 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
+                                                QgsMessageLog.logMessage(str(e), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
                                                 new_str = [float(i) for i in new_str]
                                             pair.append(new_str)                                    
                                                                            
