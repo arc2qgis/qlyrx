@@ -24,7 +24,8 @@
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QPointF
 from PyQt5.QtGui import QIcon, QColor, QFont
 from PyQt5.QtWidgets import QAction, QFileDialog, QHBoxLayout, QLabel, QComboBox, QDialog
-from qgis.core import (QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, QgsRasterShader, QgsRasterBandStats, 
+from qgis.core import (QgsMessageLog, Qgis, QgsProject, QgsWkbTypes, QgsColorRampShader, QgsPresetSchemeColorRamp, 
+                       QgsRasterShader, QgsRasterBandStats, 
                         QgsSymbol, QgsSingleSymbolRenderer,QgsSingleBandPseudoColorRenderer, QgsSimpleLineSymbolLayer, 
                         QgsLinePatternFillSymbolLayer, QgsFontMarkerSymbolLayer, QgsSettings,
                         QgsPointPatternFillSymbolLayer, QgsMarkerLineSymbolLayer, QgsMarkerSymbol, 
@@ -338,5 +339,7 @@ class qlyrx:
             self.styler.apply_lyrx_symbols(self.dlg, layer, self.j_data, geometry_general_type_str)
             if self.dlg.saveQmlCheck.isChecked():
                 self.saveQML(layer)
-            self.mb.pushSuccess('Yay',"It's Working")
+            self.mb.pushSuccess('qlyrx',"Style Applied Successfully")
+            QgsMessageLog.logMessage("Style '{}' Applied Successfully to layer: '{}'".format(self.dlg.file_select.filePath(),layerName), tag=
+                                     "qlyrx", level=Qgis.Success)
             #pass
