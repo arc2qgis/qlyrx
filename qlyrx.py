@@ -205,7 +205,7 @@ class qlyrx:
 
     def LoadStyle(self):
         """
-        Adding a context menu option to apply previously saved QML\SLD styles
+        Adding a context menu option to apply previously saved QML\\SLD styles
         """
         layer = self.iface.activeLayer()
         self.fd = QFileDialog()
