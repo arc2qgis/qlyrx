@@ -412,26 +412,30 @@ class qlyrxStyler():
         # Find a renderer with the active layer field attribute
         rend_to_check = []
         x = 0    
-        for r in renderers_symb_type:
-            #if geometry_general_type_str in r:            
-            rend_to_check.append(x)
-            x = x + 1
+        try:
+            for r in renderers_symb_type:
+                #if geometry_general_type_str in r:            
+                rend_to_check.append(x)
+                x = x + 1
 
-        ## TODO: check why unused
-        #rend_idx = -1
-        self.used_fields = []
-        ## Check in the active layers for matching classification fields  
-        for z in rend_to_check:
-            for f in renderers[z]['fields']:
-                if f not in self.used_fields:
-                    self.used_fields.append(f)
-            field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
-            if field_exist > -1:
-                ## TODO: check why unused
-                #rend_idx = z
-                pass
-        #for u in range(0,len(self.used_fields)):
-            #self.add_field_layout(dlg,layer,self.used_fields[u],u)
+            ## TODO: check why unused
+            #rend_idx = -1
+            self.used_fields = []
+            ## Check in the active layers for matching classification fields  
+            for z in rend_to_check:
+                if 'fields' in renderers[z]:
+                    for f in renderers[z]['fields']:
+                        if f not in self.used_fields:
+                            self.used_fields.append(f)
+                    field_exist = layer.fields().indexFromName(renderers[z]['fields'][0])
+                    if field_exist > -1:
+                        ## TODO: check why unused
+                        #rend_idx = z
+                        pass
+            #for u in range(0,len(self.used_fields)):
+                #self.add_field_layout(dlg,layer,self.used_fields[u],u)
+        except Exception as e:
+            QgsMessageLog.logMessage("Error parsing style {}".format(str(e)), 'qlyrxStyler', level=Qgis.MessageLevel.Critical)
 
     def clear_field_layout(self, dlg):
         fields_layout = dlg.field_selection
